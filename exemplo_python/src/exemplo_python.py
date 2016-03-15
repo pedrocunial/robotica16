@@ -25,7 +25,7 @@ def talker():
 		pub.publish(hello_str)
 		rate.sleep()
 
-def controle():
+def controle_grupo():
 	# coisas do miranda
 	rospy.init_node("exemplo_python")
 	velocidade_objetivo = None;
@@ -57,6 +57,8 @@ def move_exemplo():
 	for i in range(30):
 		p.publish(twist)
 		rospy.sleep(0.1) # 30*0.1 = 3.0
+    # Todo: a partir de uma leitura da odometria faça
+    # um publish na velocidade até que o robô tenha andado 2 metros
 
 	# create a new message
 	twist = Twist()
@@ -101,6 +103,14 @@ class square:
 		twist = Twist()
 		self.pub.publish(twist)
 
+def controle():
+    """
+        Função inicial do programa
+    """
+    rospy.Subscriber('/odom', Odometry, notificacao).
+    # Initial movement.
+    pub.publish(velocidade_objetivo)
+    rospy.spin() # Faz um loop infinito para o ROS nao retornar
 
 if __name__ == '__main__':
     try:
