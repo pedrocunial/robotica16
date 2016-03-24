@@ -8,7 +8,7 @@ from sensor_msgs.msg import LaserScan
 
 
 def scaneou(dado):
-	print(min(dado.ranges))
+	print(max(dado.ranges))
 
 	
 
@@ -18,7 +18,7 @@ if __name__=="__main__":
 	rospy.init_node("aula7")
 
 	velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 3 )
-	recebe_scan = rospy.Subscriber("/scan", LaserScan, scaneou)
+	recebe_scan = rospy.Subscriber("/stable_scan", LaserScan, scaneou)
 
 
 

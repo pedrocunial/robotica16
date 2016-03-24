@@ -34,10 +34,10 @@ def controle_grupo():
 	# Initial movement.
 	# velocidade_objetivo = 
 	pub.publish(velocidade_objetivo)
-	rospy.spin() # Faz um loop infinito para o ROS nao retornar
+	rospy.spin() 	# Faz um loop infinito para o ROS nao retornar
 
 def move_exemplo():
-	x_speed = 0.1 # 0.1 m/s
+	x_speed = 0.1 	# 0.1 m/s
 
 	# first thing, init a node!
 	rospy.init_node('move')
