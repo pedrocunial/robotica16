@@ -19,7 +19,7 @@ import tf
 from tf import TransformListener
 from tf import TransformBroadcaster
 from tf.transformations import euler_from_quaternion, rotation_matrix, quaternion_from_matrix
-from random import gauss
+from random import gauss, randint
 
 import math
 import time
@@ -83,6 +83,7 @@ class ParticleFilter:
                                    The pose is expressed as a list [x,y,theta] (where theta is the yaw)
             map: the map we will be localizing ourselves in.  The map should be of type nav_msgs/OccupancyGrid
     """
+
     def __init__(self):
         self.initialized = False        # make sure we don't perform updates before everything is setup
         rospy.init_node('pf')           # tell roscore that we are creating a new node named "pf"
@@ -116,6 +117,7 @@ class ParticleFilter:
         self.tf_broadcaster = TransformBroadcaster()
 
         self.particle_cloud = []
+        self.initial_particles = initial_list_builder()
 
         self.current_odom_xy_theta = []
 
@@ -126,6 +128,25 @@ class ParticleFilter:
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
         #self.occupancy_field = OccupancyField(map)
         self.initialized = True
+
+    def initial_list_builder(self):
+        '''
+        Creates the initial particles list,
+        using the super advanced methods
+        provided to us by the one and only
+        John
+        Cena
+        '''
+        initial_particles = []
+
+        for i in range(1000):
+            p = Particle()
+            p.x = randint(100) / 100
+            p.y = randint(100) / 100
+            p.theta = randint(359)
+            initial_particles.append(p)
+
+        return initial_particles
 
     def update_robot_pose(self):
         """ Update the estimate of the robot's pose given the updated particles.
