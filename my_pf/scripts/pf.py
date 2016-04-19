@@ -133,7 +133,7 @@ class ParticleFilter:
 
         self.particle_cloud = []
         self.initial_particles = initial_list_builder()
-        self.particle_cloud.append([particle for particle in self.initial_particles])
+        self.particle_cloud = self.initial_particles
         print(self.particle_cloud)
         self.current_odom_xy_theta = []
 
