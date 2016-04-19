@@ -17,7 +17,7 @@ from geometry_msgs.msg import (PoseStamped,
                                PoseArray, Pose, Point,
                                Quaternion)
 from nav_msgs.srv import GetMap
-# from nav_msgs.msg import Odometry
+from nav_msgs.msg import OccupancyGrid
 from copy import deepcopy
 
 import tf
@@ -112,7 +112,6 @@ class ParticleFilter:
         self.a_thresh = math.pi / 6     # the amount of angular movement before performing an update
 
         self.laser_max_distance = 2.0   # maximum penalty to assess in the likelihood field model
-
         # TODO: define additional constants if needed
 
         # Setup pubs and subs
@@ -141,7 +140,7 @@ class ParticleFilter:
         #       into the init method for OccupancyField
 
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
-        self.occupancy_field = OccupancyField(mapa)
+        # self.occupancy_field = OccupancyField(obter_mapa())
         self.initialized = True
 
     def update_robot_pose(self):
@@ -206,12 +205,14 @@ class ParticleFilter:
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
         # TODO: implement this
-        for particle in self.particle_cloud:
-            w = self.occupancy_field.get_closest_obstacle_distance(self, particle.x, particle.y)
-            if w == 'nan':
-                particle.theta = 0
-            else:
-                particle.theta = w
+
+        for i in range(360):
+            for particle in self.particle_cloud:
+                d = self.occupancy_field.get_closest_obstacle_distance(self, math.cos(math.radians(i)), math.sin(math.radians(i)))
+                if d == 'nan':
+                    particle.theta = 0
+                else:
+                    particle.theta = d
 
     @staticmethod
     def weighted_values(values, probabilities, size):
@@ -279,16 +280,19 @@ class ParticleFilter:
             guide.  The input msg is an object of type sensor_msgs/LaserScan """
         if not(self.initialized):
             # wait for initialization to complete
+            print 1
             return
 
         if not(self.tf_listener.canTransform(self.base_frame,msg.header.frame_id,msg.header.stamp)):
             # need to know how to transform the laser to the base frame
             # this will be given by either Gazebo or neato_node
+            print 2
             return
 
         if not(self.tf_listener.canTransform(self.base_frame,self.odom_frame,msg.header.stamp)):
             # need to know how to transform between base and odometric frames
             # this will eventually be published by either Gazebo or neato_node
+            print 3
             return
 
         # calculate pose of laser relative ot the robot base
@@ -299,7 +303,7 @@ class ParticleFilter:
         # find out where the robot thinks it is based on its odometry
         p = PoseStamped(header=Header(stamp=msg.header.stamp,
                                       frame_id=self.base_frame),
-                        pose=Pose())
+                                      pose=Pose())
         self.odom_pose = self.tf_listener.transformPose(self.odom_frame, p)
         # store the the odometry pose in a more convenient format (x,y,theta)
         new_odom_xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
@@ -353,6 +357,7 @@ class ParticleFilter:
                                           self.odom_frame,
                                           self.map_frame)
 
+
 def initial_list_builder():
     '''
     Creates the initial particles list,
@@ -371,6 +376,16 @@ def initial_list_builder():
         initial_particles.append(p)
 
     return initial_particles
+
+def obter_mapa():
+    rospy.wait_for_service('map')
+    try:
+        get_map = rospy.ServiceProxy('map', GetMap)
+        mapa = get_map().map
+        return mapa
+    except rospy.ServiceException, e:
+        print "Service call failed: %s"%e
+
 
 
 if __name__ == '__main__':
