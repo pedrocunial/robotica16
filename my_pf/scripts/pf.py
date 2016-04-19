@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
 
 """ This is the starter code for the robot localization project
 
@@ -16,6 +17,7 @@ from geometry_msgs.msg import (PoseStamped,
                                PoseArray, Pose, Point,
                                Quaternion)
 from nav_msgs.srv import GetMap
+# from nav_msgs.msg import Odometry
 from copy import deepcopy
 
 import tf
@@ -107,7 +109,7 @@ class ParticleFilter:
         self.n_particles = 300          # the number of particles to use
 
         self.d_thresh = 0.2             # the amount of linear movement before performing an update
-        self.a_thresh = math.pi/6       # the amount of angular movement before performing an update
+        self.a_thresh = math.pi / 6     # the amount of angular movement before performing an update
 
         self.laser_max_distance = 2.0   # maximum penalty to assess in the likelihood field model
 
@@ -120,7 +122,7 @@ class ParticleFilter:
         # publish the current particle cloud.  This enables viewing particles in rviz.
         self.particle_pub = rospy.Publisher("particlecloud", PoseArray, queue_size=10)
         # ?????
-        rospy.Subscriber('/simple_odom', OdometrySimple, self.process_odom)
+        # rospy.Subscriber('/simple_odom', Odometry, self.process_odom)
 
         # laser_subscriber listens for data from the lidar
         self.laser_subscriber = rospy.Subscriber(self.scan_topic, LaserScan, self.scan_received)
@@ -132,7 +134,7 @@ class ParticleFilter:
         self.particle_cloud = []
         self.initial_particles = initial_list_builder()
         self.particle_cloud.append([particle for particle in self.initial_particles])
-
+        print(self.particle_cloud)
         self.current_odom_xy_theta = []
 
         # request the map from the map server, the map should be of type nav_msgs/OccupancyGrid
@@ -174,13 +176,15 @@ class ParticleFilter:
                          new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
 
                 self.current_odom_xy_theta = new_odom_xy_theta
+                particle.x += delta[0]
+                particle.y += delta[1]
+                particle.theta += delta[2]
             else:
                 self.current_odom_xy_theta = new_odom_xy_theta
-                return
+                return      # ????
 
-        # particle.x += delta[0]
-        # particle.y += delta[1]
-        # particle.theta += delta[2]
+
+
 
         # TODO: modify particles using delta
         # For added difficulty: Implement sample_motion_odometry (Prob Rob p 136)
