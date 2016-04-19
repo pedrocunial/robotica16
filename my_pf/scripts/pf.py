@@ -123,7 +123,6 @@ class ParticleFilter:
         self.particle_pub = rospy.Publisher("particlecloud", PoseArray, queue_size=10)
         # ?????
         # rospy.Subscriber('/simple_odom', Odometry, self.process_odom)
-
         # laser_subscriber listens for data from the lidar
         self.laser_subscriber = rospy.Subscriber(self.scan_topic, LaserScan, self.scan_received)
 
@@ -142,7 +141,7 @@ class ParticleFilter:
         #       into the init method for OccupancyField
 
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
-        #self.occupancy_field = OccupancyField(map)
+        self.occupancy_field = OccupancyField(mapa)
         self.initialized = True
 
     def update_robot_pose(self):
@@ -207,7 +206,12 @@ class ParticleFilter:
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
         # TODO: implement this
-        pass
+        for particle in self.particle_cloud:
+            w = self.occupancy_field.get_closest_obstacle_distance(self, particle.x, particle.y)
+            if w == 'nan':
+                particle.theta = 0
+            else:
+                particle.theta = w
 
     @staticmethod
     def weighted_values(values, probabilities, size):
@@ -246,7 +250,7 @@ class ParticleFilter:
         """ Initialize the particle cloud.
             Arguments
             xy_theta: a triple consisting of the mean x, y, and theta (yaw) to initialize the
-                      particle cloud around.  If this input is ommitted, the odometry will be used """
+            particle cloud around.  If this input is ommitted, the odometry will be used """
         if xy_theta == None:
             xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
         self.particle_cloud = []
@@ -345,7 +349,7 @@ class ParticleFilter:
             return
         self.tf_broadcaster.sendTransform(self.translation,
                                           self.rotation,
-                                          rospy.get_rostime(),
+                                          rospy.Time(0),
                                           self.odom_frame,
                                           self.map_frame)
 
