@@ -262,8 +262,12 @@ class ParticleFilter:
 
     def normalize_particles(self):
         """ Make sure the particle weights define a valid distribution (i.e. sum to 1.0) """
-        pass
         # TODO: implement this
+        w_sum = 0
+        for p in self.particle_cloud:
+            w_sum+=p.w
+        for p in self.particle_cloud:
+            p.normalize(w_sum)
 
     def publish_particles(self, msg):
         particles_conv = []
@@ -309,6 +313,7 @@ class ParticleFilter:
         new_odom_xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
 
         print(self.current_odom_xy_theta)
+        print(new_odom_xy_theta)
 
         if not(self.particle_cloud):
             # now that we have all of the necessary transforms we can update the particle cloud
@@ -343,7 +348,7 @@ class ParticleFilter:
             the localizer """
         (translation, rotation) = convert_pose_inverse_transform(self.robot_pose)
         p = PoseStamped(pose=convert_translation_rotation_to_pose(translation,rotation),
-                        header=Header(stamp=msg.header.stamp,frame_id=self.base_frame))
+                        header=Header(stamp=rospy.Time(0),frame_id=self.base_frame))
         self.odom_to_map = self.tf_listener.transformPose(self.odom_frame, p)
         (self.translation, self.rotation) = convert_pose_inverse_transform(self.odom_to_map.pose)
 
@@ -355,7 +360,7 @@ class ParticleFilter:
             return
         self.tf_broadcaster.sendTransform(self.translation,
                                           self.rotation,
-                                          rospy.Time(0),
+                                          rospy.Time.now(),
                                           self.odom_frame,
                                           self.map_frame)
 
@@ -375,6 +380,7 @@ def initial_list_builder():
         p.x = randint(0, 100) / 100
         p.y = randint(0, 100) / 100
         p.theta = randint(0, 359)
+        p.w = 1
         initial_particles.append(p)
 
     return initial_particles
