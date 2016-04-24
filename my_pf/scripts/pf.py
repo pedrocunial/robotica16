@@ -108,8 +108,10 @@ class ParticleFilter:
 
         self.n_particles = 300          # the number of particles to use
 
-        self.d_thresh = .2                   # the amount of linear movement before performing an update
-        self.a_thresh = math.pi / 6          # the amount of angular movement before performing an update
+        self.model_noise_rate = 0.15
+
+        self.d_thresh = .2              # the amount of linear movement before performing an update
+        self.a_thresh = math.pi / 6     # the amount of angular movement before performing an update
 
         self.laser_max_distance = 2.0   # maximum penalty to assess in the likelihood field model
         # TODO: define additional constants if needed
@@ -131,7 +133,7 @@ class ParticleFilter:
         self.particle_cloud = []
         self.current_odom_xy_theta = [] # [.0] * 3
         # self.initial_particles = self.initial_list_builder()
-        # self.particle_cloud = self.initial_particles
+        # self.particle_cloud = self.initialize_particle_cloud()
         print(self.particle_cloud)
         # self.current_odom_xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
 
@@ -233,16 +235,10 @@ class ParticleFilter:
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
         # TODO: implement this
-
-        
-
-        # for i in range(360):
-        #     for particle in self.particle_cloud:
-        #         d = self.occupancy_field.get_closest_obstacle_distance(self, math.cos(math.radians(i)), math.sin(math.radians(i)))
-        #         if d == 'nan':
-        #             particle.theta = 0
-        #         else:
-        #             particle.theta = d
+        for r in msg.ranges:
+            for p in self.particle_cloud:
+                p.w = 1
+                self.occupancy_field.get_particle_likelyhood(p, r, self.model_noise_rate)
 
     @staticmethod
     def weighted_values(values, probabilities, size):
@@ -284,8 +280,8 @@ class ParticleFilter:
             particle cloud around.  If this input is ommitted, the odometry will be used """
         if xy_theta == None:
             xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
-        self.particle_cloud = []
         # TODO create particles
+        self.particle_cloud = self.initial_list_builder(xy_theta)
 
         self.normalize_particles()
         self.update_robot_pose()
@@ -397,7 +393,7 @@ class ParticleFilter:
                                           self.map_frame)
 
 
-    def initial_list_builder(self):
+    def initial_list_builder(self, xy_theta):
         '''
         Creates the initial particles list,
         using the super advanced methods
@@ -409,19 +405,16 @@ class ParticleFilter:
 
         for i in range(self.n_particles):
             p = Particle()
-            p.x = randint(0, 100) / 100
-            p.y = randint(0, 100) / 100
-            p.theta = randint(0, 359)
+            p.x = gauss(xy_theta[0], 1)
+            p.y = gauss(xy_theta[1], 1)
+            p.theta = gauss(xy_theta[2], (math.pi / 2))
             p.w = 1 / self.n_particles
             initial_particles.append(p)
 
         return initial_particles
 
 def obter_mapa():
-    print "bling"
     rospy.wait_for_service("static_map")
-    # time.sleep(2)
-    print "bla"
     try:
         get_map = rospy.ServiceProxy('static_map', GetMap)
         mapa = get_map().map
