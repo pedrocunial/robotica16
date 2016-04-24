@@ -18,6 +18,8 @@ from random import gauss
 import math
 import time
 
+from scipy.stats import norm
+
 import numpy as np
 from numpy.random import random_sample
 from sklearn.neighbors import NearestNeighbors
