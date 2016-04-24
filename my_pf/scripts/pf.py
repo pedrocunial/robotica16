@@ -142,11 +142,8 @@ class ParticleFilter:
         #       into the init method for OccupancyField
 
         # for now we have commented out the occupancy field initialization until you can successfully fetch the map
-        print("jiboia")
         mapa = obter_mapa()
-        print "gabi"
         self.occupancy_field = OccupancyField(mapa)
-        print("charlinho")
         # self.update_particles_with_odom(msg)
         self.initialized = True
 
@@ -158,16 +155,6 @@ class ParticleFilter:
         """
         # first make sure that the particle weights are normalized
         self.normalize_particles()
-        #
-        # x = 0
-        # y = 0
-        # theta = 0
-        # angles = []
-        # for p in self.particle_cloud:
-        #     x += p.x * p.w
-        #     y += p.y * p.w
-        #     v = [p.w * math.cos(math.radians(p.theta)), p.w * math.sin(math.radians(p.theta))]
-        # theta = sum_vectors(angles)
         # TODO: assign the lastest pose into self.robot_pose as a geometry_msgs.Pose object
         # just to get started we will fix the robot's pose to always be at the origin
         self.robot_pose = Pose()
@@ -185,11 +172,16 @@ class ParticleFilter:
         print(new_odom_xy_theta)
         # compute the change in x,y,theta since our last update
         if self.current_odom_xy_theta:
+            new_odom_xy_theta = convert_pose_to_xy_and_theta(self.odom_pose.pose)
             old_odom_xy_theta = self.current_odom_xy_theta
             delta = (new_odom_xy_theta[0] - self.current_odom_xy_theta[0],
                      new_odom_xy_theta[1] - self.current_odom_xy_theta[1],
                      new_odom_xy_theta[2] - self.current_odom_xy_theta[2])
 
+            for p in self.particle_cloud:
+                p.x += delta[0]
+                p.y += delta[1]
+                p.theta += delta[2]
             self.current_odom_xy_theta = new_odom_xy_theta
         else:
             self.current_odom_xy_theta = new_odom_xy_theta
@@ -219,18 +211,16 @@ class ParticleFilter:
             function draw_random_sample.
         """
         # make sure the distribution is normalized
-        self.normalize_particles()
         # TODO: fill out the rest of the implementation
-        new_particle_cloud = []
-        for i in range(len(self.particle_cloud)):
-            c = random_sample()
-            c_sum = 0
-            for p in self.particle_cloud:
-                c_sum += p.w
-                if c_sum >= c:
-                    new_particle_cloud.append(deepcopy(p))
-                    break
-        self.particle_cloud = new_particle_cloud
+
+        self.particle_cloud = ParticleFilter.weighted_values(self.particle_cloud,
+                                                [p.w for p in self.particle_cloud],
+                                                len(self.particle_cloud))
+
+        for p in particle_cloud:
+            p.w = 1 / len(self.particle_cloud)
+
+        self.normalize_particles()
 
     def update_particles_with_laser(self, msg):
         """ Updates the particle weights in response to the scan contained in the msg """
@@ -239,6 +229,9 @@ class ParticleFilter:
             for p in self.particle_cloud:
                 p.w = 1
                 self.occupancy_field.get_particle_likelyhood(p, r, self.model_noise_rate)
+
+        self.normalize_particles()
+        self.resample_particles()
 
     @staticmethod
     def weighted_values(values, probabilities, size):
@@ -291,9 +284,10 @@ class ParticleFilter:
         # TODO: implement this
         w_sum = 0
         for p in self.particle_cloud:
-            w_sum+=p.w
+            w_sum += p.w
         for p in self.particle_cloud:
-            p.normalize(w_sum)
+            p.w /= w_sum
+
 
     def publish_particles(self, msg):
         particles_conv = []
@@ -324,7 +318,6 @@ class ParticleFilter:
             # this will eventually be published by either Gazebo or neato_node
             print 3
             return
-        print "oi"
         # calculate pose of laser relative ot the robot base
         p = PoseStamped(header=Header(stamp=rospy.Time(0),
                                       frame_id=msg.header.frame_id))
@@ -408,7 +401,7 @@ class ParticleFilter:
             p.x = gauss(xy_theta[0], 1)
             p.y = gauss(xy_theta[1], 1)
             p.theta = gauss(xy_theta[2], (math.pi / 2))
-            p.w = 1 / self.n_particles
+            p.w = 1.0 / self.n_particles
             initial_particles.append(p)
 
         return initial_particles
