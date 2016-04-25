@@ -241,6 +241,7 @@ class ParticleFilter:
             size: the number of samples
         """
         bins = np.add.accumulate(probabilities)
+        print(size, bins)
         return values[np.digitize(random_sample(size), bins)]
 
     @staticmethod
