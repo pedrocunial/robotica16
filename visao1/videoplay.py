@@ -5,6 +5,7 @@ import numpy as np
 import math
 
 cap = cv2.VideoCapture('hall_box_battery.mp4')
+HEIGHT = int(cap.get(4))
 
 while(True):
     # Capture frame-by-frame
@@ -34,8 +35,28 @@ while(True):
         if lines != None:
             a,b,c = lines.shape
             for i in range(a):
-                # Faz uma linha ligando o ponto inicial ao ponto final, com a cor vermelha (BGR)
-                cv2.line(cdst, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 0, 255), 3, cv2.CV_AA)
+                if len(lines[i]) > 1:
+                    # Faz uma linha ligando o ponto inicial ao ponto final, com a cor vermelha (BGR)
+                    cv2.line(cdst, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 0, 255), 3, cv2.CV_AA)
+                    cv2.line(cdst, (lines[i][1][0], lines[i][1][1]), (lines[i][1][2], lines[i][1][3]), (0, 0, 255), 3, cv2.CV_AA)
+                    x1 = lines[i][0][2] - lines[i][0][0]
+                    x2 = lines[i][1][2] - lines[i][1][0]
+                    x1_value = lines[i][0][2]
+                    x2_value = lines[i][1][2]
+
+                    if x1_value > x2_value:
+                        troca = x2_value
+                        x2_value = x1_value
+                        x1_value = troca
+
+                    k = 0
+                    while k < 50:
+                        x1_value += x1
+                        x2_value += x2
+                        if x1_value >= x2_value:
+                            cv2.line(cdst, (int(x1_value), 0), (int(x1_value), HEIGHT), (0, 255, 0), 3, cv2.CV_AA)
+                            k = 100
+                        k += 1
 
     else:    # HoughLines
         # Esperemos nao cair neste caso
@@ -56,7 +77,7 @@ while(True):
 
     final = cv2.bitwise_or(red_image, cdst)
     # Display the resulting frame
-    cv2.imshow('a-ha - Take On Me (Official Video)',final)
+    cv2.imshow('a-ha - Take On Me (Official Video)', final)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
