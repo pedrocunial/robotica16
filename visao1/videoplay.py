@@ -41,15 +41,20 @@ while(True):
                     cv2.line(cdst, (lines[i][1][0], lines[i][1][1]), (lines[i][1][2], lines[i][1][3]), (0, 0, 255), 3, cv2.CV_AA)
                     x1 = lines[i][0][2] - lines[i][0][0]
                     x2 = lines[i][1][2] - lines[i][1][0]
-                    x1_value = lines[i][0][2]
-                    x2_value = lines[i][1][2]
+                    x1_value = lines[i][0][0]
+                    x2_value = lines[i][1][0]
 
                     if x1_value > x2_value:
                         troca = x2_value
                         x2_value = x1_value
                         x1_value = troca
 
-                    k = 0
+                    # Para evitar retas com coeficiente angular muito grande
+                    if x1_value > 50 or x2_value < -50:
+                        k = 100
+                    else:
+                        k = 0
+
                     while k < 50:
                         x1_value += x1
                         x2_value += x2
