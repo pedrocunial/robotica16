@@ -65,8 +65,8 @@ while(True):
                     # Para evitar retas com coeficiente angular muito grande
                     # e para isso, precisamos primeiro calcular o coeficiente
                     # da mesma
-                    m1 = dx1d / (lines[i][0][3] - lines[i][0][1])
-                    m2 = dx2d / (lines[i][1][3] - lines[i][1][1])
+                    m1 = (lines[i][0][3] - lines[i][0][1]) / dx1d
+                    m2 = (lines[i][1][3] - lines[i][1][1]) / dx1d
 
                     # Então, conferimos se eles convergem em um "futuro próximo"
                     if m1 > 5 or m2 < -5:
