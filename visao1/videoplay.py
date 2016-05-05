@@ -63,7 +63,13 @@ while(True):
                         dx1d = d_troca
 
                     # Para evitar retas com coeficiente angular muito grande
-                    if x1 > 50 or x2 < -50:
+                    # e para isso, precisamos primeiro calcular o coeficiente
+                    # da mesma
+                    m1 = dx1d / (lines[i][0][3] - lines[i][0][1])
+                    m2 = dx2d / (lines[i][1][3] - lines[i][1][1])
+
+                    # Então, conferimos se eles convergem em um "futuro próximo"
+                    if m1 > 5 or m2 < -5:
                         k = 100
                     else:
                         k = 0
