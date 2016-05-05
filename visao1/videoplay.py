@@ -39,27 +39,44 @@ while(True):
                     # Faz uma linha ligando o ponto inicial ao ponto final, com a cor vermelha (BGR)
                     cv2.line(cdst, (lines[i][0][0], lines[i][0][1]), (lines[i][0][2], lines[i][0][3]), (0, 0, 255), 3, cv2.CV_AA)
                     cv2.line(cdst, (lines[i][1][0], lines[i][1][1]), (lines[i][1][2], lines[i][1][3]), (0, 0, 255), 3, cv2.CV_AA)
-                    x1 = lines[i][0][2] - lines[i][0][0]
-                    x2 = lines[i][1][2] - lines[i][1][0]
-                    x1_value = lines[i][0][0]
-                    x2_value = lines[i][1][0]
 
-                    if x1_value > x2_value:
-                        troca = x2_value
-                        x2_value = x1_value
-                        x1_value = troca
+                    # dx?d é a taxa de variação em x da reta
+                    dx1d = (lines[i][0][2] - lines[i][0][0])
+                    dx2d = (lines[i][1][2] - lines[i][1][0])
+
+                    # x? é o valor inicial da reta, usamos isso para
+                    # ao adicionar a sua taxa de variação cheguemos
+                    # no valor que quisermos da reta
+                    x1 = lines[i][0][0]
+                    x2 = lines[i][1][0]
+
+                    # Para facilitar as comparações vamos fazer com que
+                    # x2 sempre seja o valor de maior coeficiente angular
+                    # caso contrário, trocamos os seus valores absolutos
+                    # e de coeficientes angulares
+                    if x1 > x2:
+                        troca = x2
+                        x2 = x1
+                        x1 = troca
+                        d_troca = dx2d
+                        dx2d = dx1d
+                        dx1d = d_troca
 
                     # Para evitar retas com coeficiente angular muito grande
-                    if x1_value > 50 or x2_value < -50:
+                    if x1 > 50 or x2 < -50:
                         k = 100
                     else:
                         k = 0
 
+                    # "Monta as funções matemáticas", ou seja, neste loop damos
+                    # valores para os 'x' conforme eles variam de acordo com
+                    # a sua taxa de variação, quando eles se cruzam, sabemos que
+                    # passamos pelo ponto que representaria o fim do corredor
                     while k < 50:
-                        x1_value += x1
-                        x2_value += x2
-                        if x1_value >= x2_value:
-                            cv2.line(cdst, (int(x1_value), 0), (int(x1_value), HEIGHT), (0, 255, 0), 3, cv2.CV_AA)
+                        x1 += dx1d
+                        x2 += dx2d
+                        if x1 >= x2:
+                            cv2.line(cdst, (int(x1), 0), (int(x1), HEIGHT), (0, 255, 0), 3, cv2.CV_AA)
                             k = 100
                         k += 1
 
