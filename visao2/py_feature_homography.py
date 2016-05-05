@@ -129,6 +129,7 @@ if len(good)>MIN_MATCH_COUNT:
     matchesMask = mask.ravel().tolist()
 
     h,w = img1.shape
+    print img1.shape
     pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
     # Transforma os pontos da imagem origem para onde estao na imagem destino

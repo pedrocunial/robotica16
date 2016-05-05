@@ -46,10 +46,10 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     out = np.zeros((max([rows1,rows2]),cols1+cols2,3), dtype='uint8')
 
     # Place the first image to the left
-    out[:rows1,:cols1] = np.dstack([img1, img1, img1])
+    # out[:rows1,:cols1] = np.dstack([img1, img1, 3])
 
     # Place the next image to the right of it
-    out[:rows2,cols1:] = np.dstack([img2, img2, img2])
+    # out[:rows2,cols1:] = np.dstack([img2, img2, 3])
 
     # For each pair of points we have between both images
     # draw circles, then connect a line between them
@@ -78,24 +78,108 @@ def drawMatches(img1, kp1, img2, kp2, matches):
 
 
     # Show the image
-    cv2.imshow('Matched Features', out)
-    cv2.waitKey(0)
-    cv2.destroyWindow('Matched Features')
+    # cv2.imshow('Matched Features', img2)
+    # cv2.waitKey(0)
+    # cv2.destroyWindow('Matched Features')
 
     # Also return the image if you'd like a copy
-    return out
+    return img2
 
-
-
+pic_taken = False
 webcam = cv2.VideoCapture(0)
-for i in range(1, 4, -1):
-    print i
-    time.sleep(1);
 
-val, image = webcam.read()
+while(not pic_taken):
+    for i in range(3, 0, -1):
+        # Contagem regressiva para tirar a foto do objeto
+        # a ser análisado / localizado
+        print i
+        time.sleep(.5);
 
-if val:
-    webcam.release()
-    cv2.imshow("Foto", image)
-    cv2.waitKey(0)
-    cv2.destroyWindow("Foto")
+    # Tira foto
+    print "Cheese!"
+    val, pic = webcam.read()
+
+    if val:
+        cv2.imshow("Foto", pic)
+        cv2.waitKey(0)
+        pic_taken = True
+    else:
+        print "Não foi possível localizar sua webcam e tirar uma bela foto"
+
+    cv2.destroyAllWindows()
+
+# Valores para o estudo com Homography
+MIN_MATCH_COUNT = 10
+sift = cv2.SIFT()
+kp1, des1 = sift.detectAndCompute(pic, None)
+
+while(True):
+    # Tira foto (dentro de loop, ou seja, fazemos
+    # espécie de slide show)
+    val, image = webcam.read()
+
+    # Confere se foi possível tirar a foto
+    if val:
+        cv2.imshow('Webcam', image)
+        kp2, des2 = sift.detectAndCompute(image, None)
+
+        FLANN_INDEX_KDTREE = 0
+        index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+        search_params = dict(checks = 50)
+
+        # Configura o algoritmo de casamento de features
+        flann = cv2.FlannBasedMatcher(index_params, search_params)
+
+        # Tenta fazer a melhor comparacao usando o algoritmo
+        matches = flann.knnMatch(des1,des2,k=2)
+
+        good = []
+        for m,n in matches:
+            if m.distance < 0.7*n.distance:
+                good.append(m)
+
+
+        if len(good)>MIN_MATCH_COUNT:
+            # Separa os bons matches na origem e no destino
+            src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
+            dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
+
+
+            # Tenta achar uma trasformacao composta de rotacao, translacao e escala que situe uma imagem na outra
+            M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+            matchesMask = mask.ravel().tolist()
+
+            h,w = pic.shape[0], pic.shape[1]
+            pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
+
+            # Transforma os pontos da imagem origem para onde estao na imagem destino
+            dst = cv2.perspectiveTransform(pts,M)
+
+            # Desenha as linhas
+            img2b = cv2.polylines(image,[np.int32(dst)],True,255,3, cv2.CV_AA)
+
+        else:
+            print "Not enough matches are found - %d/%d" % (len(good),MIN_MATCH_COUNT)
+            matchesMask = None
+
+        draw_params = dict(matchColor = (0,255,0), # draw matches in green color
+                           singlePointColor = None,
+                           matchesMask = matchesMask, # draw only inliers
+                           flags = 2)
+
+        img3 = drawMatches(pic, kp1, image, kp2, good[:20])
+        cv2.imshow("final", img3)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    else:
+        print "Não foi possível localizar sua webcam e fazer um belo video"
+
+
+
+webcam.release()
+cv2.destroyAllWindows()
+
+
+# PS: Peguei a ideia de usar a webcam do Dias, mas eu simplesmente achei
+#     boa demais para fazer de qualquer outra maneira
