@@ -35,7 +35,6 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     # Create a new output image that concatenates the two images together
     # (a.k.a) a montage
 
-    print(img2)
 
 
     rows1 = img1.shape[0]
@@ -92,9 +91,21 @@ if __name__ == "__main__":
 
     Primeiro tirei uma foto de uma ilustre lata da marca sensações
     que pode ser encontrada no FabLab Insper(tm). Esta lata media
-    15cm e estava incialmente a 20,5cm da câmera (tanto na foto,
-    quanto no vídeo)
+    15cm, com o adicional de 1,5cm da borda superior e estava
+    incialmente a 20,5cm da câmera (tanto na foto, quanto no vídeo).
+
+    Medindo o tamanho da lata de sensações em pixels na foto obtive
+    o valor de 1270px. Pela equivalência (D / H == d / h), temos uma
+    distancia "d" de 1736px (distância focal, que nos referiremos daqui
+    em diante como F).
+
+    Com isso, podemos encontrar o valor da distância do objeto à câmera
+    em qualquer instante do vídeo ao cálcular o seu valor (D) segundo a
+    equação (utilizando os parâmetros já obtidos): D = ((F * H) / h).
+    Sendo F e H constantes ((F == 1736px) e (H == 16,5cm)), de modo que
+    podemos simplificar a equação para (D = 2640cm*px / h).
     """
+    C = 28644
 
     try:
         fn = sys.argv[1]
@@ -105,6 +116,8 @@ if __name__ == "__main__":
     dst = cv2.Canny(src, 50, 200) # aplica o detector de bordas de Canny à imagem src
     cdst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR) # Converte a imagem para BGR para permitir desenho colorido
     video = cv2.VideoCapture("sensacoes.mp4")
+    HEIGHT = int(video.get(4))
+    WIDTH = int(video.get(3))
 
     # Valores para o estudo com Homography
     MIN_MATCH_COUNT = 10
@@ -119,7 +132,6 @@ if __name__ == "__main__":
         # Confere se foi possível tirar a foto
         if True:
             image = image[1]
-            cv2.imshow('Webcam', image)
             kp2, des2 = sift.detectAndCompute(image, None)
 
             FLANN_INDEX_KDTREE = 0
@@ -153,7 +165,10 @@ if __name__ == "__main__":
 
                 # Transforma os pontos da imagem origem para onde estao na imagem destino
                 dst = cv2.perspectiveTransform(pts,M)
-
+                x1 = abs(dst[1][0][0] + dst[0][0][0])
+                x2 = abs(dst[2][0][0] + dst[3][0][0])
+                h = (x2 - x1)
+                D = C / h
                 # Desenha as linhas
                 img2b = cv2.polylines(image,[np.int32(dst)],True,255,3, cv2.CV_AA)
 
@@ -167,9 +182,17 @@ if __name__ == "__main__":
                                flags = 2)
 
             img3 = drawMatches(src, kp1, image, kp2, good[:20])
+            cv2.putText(img = img3,
+                        text = str(int(D)) + "cm",
+                        org = (int(40),int(HEIGHT - 40)),
+                        fontFace = cv2.FONT_HERSHEY_DUPLEX,
+                        fontScale = 1,
+                        color = (0,0,255),
+                        thickness = 4,
+                        lineType = cv2.CV_AA)
             cv2.imshow("final", img3)
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-    webcam.release()
     cv2.destroyAllWindows()
