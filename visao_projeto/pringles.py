@@ -103,7 +103,7 @@ if __name__ == "__main__":
     em qualquer instante do vídeo ao cálcular o seu valor (D) segundo a
     equação (utilizando os parâmetros já obtidos): D = ((F * H) / h).
     Sendo F e H constantes ((F == 1736px) e (H == 16,5cm)), de modo que
-    podemos simplificar a equação para (D = 2640cm*px / h).
+    podemos simplificar a equação para (D = 28644cm*px / h).
     """
     C = 28644
 
@@ -165,9 +165,13 @@ if __name__ == "__main__":
 
                 # Transforma os pontos da imagem origem para onde estao na imagem destino
                 dst = cv2.perspectiveTransform(pts,M)
+
+                # Calcula o tamanho do objeto em pixels no frame atual
                 x1 = abs(dst[1][0][0] + dst[0][0][0])
                 x2 = abs(dst[2][0][0] + dst[3][0][0])
                 h = (x2 - x1)
+
+                # Calcula a distância esperada em cm
                 D = C / h
                 # Desenha as linhas
                 img2b = cv2.polylines(image,[np.int32(dst)],True,255,3, cv2.CV_AA)
