@@ -87,6 +87,15 @@ def drawMatches(img1, kp1, img2, kp2, matches):
     return img2
 
 if __name__ == "__main__":
+    """
+    Meu código começa aqui.
+
+    Primeiro tirei uma foto de uma ilustre lata da marca sensações
+    que pode ser encontrada no FabLab Insper(tm). Esta lata media
+    15cm e estava incialmente a 20,5cm da câmera (tanto na foto,
+    quanto no vídeo)
+    """
+
     try:
         fn = sys.argv[1]
     except IndexError:
@@ -161,10 +170,6 @@ if __name__ == "__main__":
             cv2.imshow("final", img3)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
-
-        else:
-            print "Não foi possível localizar sua webcam e fazer um belo video"
-
 
     webcam.release()
     cv2.destroyAllWindows()
