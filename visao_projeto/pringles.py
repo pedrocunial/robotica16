@@ -90,16 +90,17 @@ if __name__ == "__main__":
     try:
         fn = sys.argv[1]
     except IndexError:
-        fn = "./sangue-de-boi.jpg"
+        fn = "./sensacoes.jpg"
 
     src = cv2.imread(fn)
     dst = cv2.Canny(src, 50, 200) # aplica o detector de bordas de Canny à imagem src
     cdst = cv2.cvtColor(dst, cv2.COLOR_GRAY2BGR) # Converte a imagem para BGR para permitir desenho colorido
-    video = cv2.VideoCapture("sangue-de-boi.mp4")
+    video = cv2.VideoCapture("sensacoes.mp4")
 
     # Valores para o estudo com Homography
     MIN_MATCH_COUNT = 10
     sift = cv2.SIFT()
+    kp1, des1 = sift.detectAndCompute(src, None)
 
     while(True):
         # Tira foto (dentro de loop, ou seja, fazemos
@@ -108,6 +109,7 @@ if __name__ == "__main__":
 
         # Confere se foi possível tirar a foto
         if True:
+            image = image[1]
             cv2.imshow('Webcam', image)
             kp2, des2 = sift.detectAndCompute(image, None)
 
@@ -137,7 +139,7 @@ if __name__ == "__main__":
                 M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
                 matchesMask = mask.ravel().tolist()
 
-                h,w = pic.shape[0], pic.shape[1]
+                h,w = src.shape[0], src.shape[1]
                 pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
 
                 # Transforma os pontos da imagem origem para onde estao na imagem destino
@@ -155,7 +157,7 @@ if __name__ == "__main__":
                                matchesMask = matchesMask, # draw only inliers
                                flags = 2)
 
-            img3 = drawMatches(pic, kp1, image, kp2, good[:20])
+            img3 = drawMatches(src, kp1, image, kp2, good[:20])
             cv2.imshow("final", img3)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
