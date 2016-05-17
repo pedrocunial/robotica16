@@ -152,6 +152,7 @@ if __name__ == "__main__":
 
             if len(good)>MIN_MATCH_COUNT:
                 # Separa os bons matches na origem e no destino
+
                 src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
                 dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
 
