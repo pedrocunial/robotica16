@@ -172,14 +172,16 @@ def my_calibration(sz):
     Calibration function for the camera (iPhone4) used in this example.
     """
     row,col = sz
-    fx = 1077.18*col/1280 # fx da minha webcam é 1077,18
-    fy = 1035.50*row/720  # fy da minha webcam é 1035,50
+    x = 515 / 8.5 * 13
+    y = 340 / 5.4 * 13
+    fx = x*col/800 # fx da minha webcam é 1077,18
+    fy = y*row/600  # fy da minha webcam é 1035,50
     K = diag([fx,fy,1])
     K[0,2] = 0.5*col
     K[1,2] = 0.5*row
     return K
 
-img0_name = "estojo.jpg"
+img0_name = "artemoderna_revamp.png"
 
 img0bgr = cv2.imread(img0_name)
 print("Input cv image", img0bgr.shape)
@@ -202,7 +204,7 @@ webcam = cv2.VideoCapture(0)
 webcam.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 800)
 webcam.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 600)
 
-OBJETIVO = (30, 20, 0)  # x, y, z em cm
+OBJETIVO = (5, 0, -50)  # x, y, z em cm
 HEIGHT = int(webcam.get(4))
 
 while(True):
@@ -274,22 +276,22 @@ while(True):
     print("Translation")
     print(Tm)
 
-    dist_x = OBJETIVO[0] - Tm[0]
-    dist_y = OBJETIVO[1] - Tm[1]
-    dist_z = OBJETIVO[2] - Tm[2]
+    dist_x = OBJETIVO[0] - Tm[2] * 13
+    dist_y = OBJETIVO[1] - Tm[1] * 13
+    dist_z = OBJETIVO[2] - Tm[0] * 13
 
-    if dist_x > 5:
-        texto = "Ande {0:.2f}cm para a direita".format(dist_x)
-    elif dist_z > 5:
-        texto = "Ande {0:.2f}cm para frente".format(dist_z)
-    elif dist_y > 5:
+    if dist_z > 5 or dist_z < -5:
+        texto = "Ande {0:.2f}cm para a frente".format(dist_z)
+    elif dist_x > 5 or dist_x < -5:
+        texto = "Ande {0:.2f}cm para direita".format(dist_x)
+    elif dist_y > 5 or dist_y < -5:
         texto = "Suba {0:.2f}cm".format(dist_y)
     else:
         texto = "Você chegou!"
 
     cv2.putText(img = img1bgr,
             text = texto,
-            org = (int(40),int(HEIGHT - 40)),
+            org = (int(50),int(HEIGHT - 40)),
             fontFace = cv2.FONT_HERSHEY_DUPLEX,
             fontScale = 1,
             color = (0,0,255),
