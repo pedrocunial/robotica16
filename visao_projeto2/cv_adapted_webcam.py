@@ -218,7 +218,6 @@ while(True):
     img1 = cv2.cvtColor(img1bgr, cv2.COLOR_BGR2GRAY)
     kp1, desc1 = cv_sift.detectAndCompute(img1, None)
 
-
     # We use OpenCV instead of the calculus of the homography present in the book
     H = find_homography(kp0, desc0, kp1, desc1)
 
@@ -276,19 +275,38 @@ while(True):
     print("Translation")
     print(Tm)
 
-    dist_x = OBJETIVO[0] - Tm[2] * 13
-    dist_y = OBJETIVO[1] - Tm[1] * 13
-    dist_z = OBJETIVO[2] - Tm[0] * 13
 
+"""
+    Devemos calcular as diferenças entre o ponto esperado (OBJETIVO)
+    e a nossa posição atual (Tm), tudo isso utilizando a imagem como
+    referencial
+"""
+    dist_x = OBJETIVO[0] - Tm[2] * 13 # distância no eixo X até o objetivo
+    dist_y = OBJETIVO[1] - Tm[1] * 13 # distância no eixo Y até o objetivo
+    dist_z = OBJETIVO[2] - Tm[0] * 13 # distância no eixo Z até o objetivo
+
+
+"""
+    Com estas distâncias estabelecidas, temos que determinar as instruções
+    para o deslocamento até o objetivo
+"""
+    # Conferimos se a distância até o objetivo no eixo Z está dentro da faixa de erro aceitável
     if dist_z > 5 or dist_z < -5:
-        texto = "Ande {0:.2f}cm para a frente".format(dist_z)
+        texto = "Ande {0:.2f}cm para frente".format(dist_z)
+
+    # Caso a distância até o objetivo em Z já satisfaça o necessário, conferimos a distância em X
     elif dist_x > 5 or dist_x < -5:
         texto = "Ande {0:.2f}cm para direita".format(dist_x)
+
+    # Por fim, dado as distâncias em X e em Z corretas, conferimos se estamso na mesma altura que o objetivo
     elif dist_y > 5 or dist_y < -5:
         texto = "Suba {0:.2f}cm".format(dist_y)
+
+    # Se passamos por todas essas condições, significa que chegamos no nosso objetivo
     else:
         texto = "Você chegou!"
 
+    # Para mostrar a ordem do movimento no vídeo
     cv2.putText(img = img1bgr,
             text = texto,
             org = (int(50),int(HEIGHT - 40)),
@@ -297,8 +315,6 @@ while(True):
             color = (0,0,255),
             thickness = 4,
             lineType = cv2.CV_AA)
-
-
 
     cv2.imshow('Aperte Q', img1bgr)
     if cv2.waitKey(1) & 0xFF == ord('q'):
