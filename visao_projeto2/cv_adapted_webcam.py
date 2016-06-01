@@ -204,7 +204,8 @@ webcam = cv2.VideoCapture(0)
 webcam.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 800)
 webcam.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 600)
 
-OBJETIVO = (5, 0, -50)  # x, y, z em cm
+# Definimos a coordenada do nosso objetivo
+OBJETIVO = (5, 0, -10)  # x, y, z em cm
 HEIGHT = int(webcam.get(4))
 
 while(True):
@@ -276,20 +277,20 @@ while(True):
     print(Tm)
 
 
-"""
-    Devemos calcular as diferenças entre o ponto esperado (OBJETIVO)
-    e a nossa posição atual (Tm), tudo isso utilizando a imagem como
-    referencial
-"""
+    """
+        Devemos calcular as diferenças entre o ponto esperado (OBJETIVO)
+        e a nossa posição atual (Tm), tudo isso utilizando a imagem como
+        referencial
+    """
     dist_x = OBJETIVO[0] - Tm[2] * 13 # distância no eixo X até o objetivo
     dist_y = OBJETIVO[1] - Tm[1] * 13 # distância no eixo Y até o objetivo
     dist_z = OBJETIVO[2] - Tm[0] * 13 # distância no eixo Z até o objetivo
 
 
-"""
-    Com estas distâncias estabelecidas, temos que determinar as instruções
-    para o deslocamento até o objetivo
-"""
+    """
+        Com estas distâncias estabelecidas, temos que determinar as instruções
+        para o deslocamento até o objetivo
+    """
     # Conferimos se a distância até o objetivo no eixo Z está dentro da faixa de erro aceitável
     if dist_z > 5 or dist_z < -5:
         texto = "Ande {0:.2f}cm para frente".format(dist_z)
